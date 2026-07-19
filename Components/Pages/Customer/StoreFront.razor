@@ -1,0 +1,113 @@
+﻿@page "/store-catalog/{TargetRetailerId}"
+@rendermode InteractiveServer
+
+@using TrackSmart.DTOs
+@using TrackSmart.Services
+@using TrackSmart.Models
+@using TrackSmart.Components.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@inject ItemService ItemService
+@inject UserManager<ApplicationUser> UserManager
+
+@* Strict Security Isolation *@
+@attribute [Authorize(Roles = "Customer")]
+
+<PageTitle>@(storeName) - TrackSmart</PageTitle>
+
+<div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
+    <div class="container mb-5">
+
+        @* Polished Page Header *@
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom border-secondary-subtle">
+            <div>
+                @* Dynamically displays the Store Name *@
+                <h2 class="fw-bold mb-1">@storeName</h2>
+                <p class="text-muted mb-0">Browse the available catalog and stock.</p>
+            </div>
+            <div class="mt-3 mt-md-0">
+                <a href="/stores" class="btn btn-outline-secondary fw-bold shadow-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Stores
+                </a>
+            </div>
+        </div>
+
+        @if (items == null)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Loading catalog...</p>
+            </div>
+        }
+        else if (!items.Any())
+        {
+            <div class="card shadow-sm border-0 rounded-4 bg-white text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-box-seam text-muted mb-3" style="font-size: 3rem;"></i>
+                    <h4 class="fw-bold">Catalog is empty</h4>
+                    <p class="text-muted">This store hasn't added any products yet.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            @* Render the Dumb Component, pass it the data *@
+            <ItemGrid Items="items">
+
+                @* Inject the Customer-specific UI into the ActionArea *@
+                <ActionArea Context="item">
+                    @* <div class="d-flex justify-content-start mt-2">
+                        @if (item.StockCount <= 0)
+                        {
+                            <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-x-circle-fill me-1"></i>Out of Stock
+                            </span>
+                        }
+                        else if (item.StockCount <= item.LowStockThreshold)
+                        {
+                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Few left
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-check-circle-fill me-1"></i>Available
+                            </span>
+                        }
+                    </div> *@
+                </ActionArea>
+
+            </ItemGrid>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string TargetRetailerId { get; set; } = "";
+
+    private List<ItemDto>? items;
+
+    // Default fallback name
+    private string storeName = "Store Catalog";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(TargetRetailerId))
+        {
+            // 1. Fetch the retailer details using the ID from the URL
+            var retailer = await UserManager.FindByIdAsync(TargetRetailerId);
+
+            // 2. If we found them and they have a store name, update the variable
+            if (retailer != null && !string.IsNullOrWhiteSpace(retailer.StoreName))
+            {
+                storeName = retailer.StoreName;
+            }
+
+            // 3. Fetch the items for this store
+            items = await ItemService.GetItemsAsync(TargetRetailerId);
+        }
+    }
+}

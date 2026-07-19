@@ -1,0 +1,173 @@
+﻿@page "/add-item"
+@rendermode InteractiveServer
+
+@using TrackSmart.DTOs
+@using TrackSmart.Services
+@using TrackSmart.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@inject ItemService ItemService
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+@attribute [Authorize(Roles = "Retailer")]
+<PageTitle>Add New Inventory - TrackSmart</PageTitle>
+
+@* The same contrast wrapper used on auth pages *@
+<div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+
+                @* A cleaner, text-based back button placed just outside the card *@
+                <div class="mb-3">
+                    <button class="btn btn-link text-decoration-none text-muted p-0" @onclick="GoBack">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Inventory
+                    </button>
+                </div>
+
+                <div class="card shadow-lg border-0 rounded-4 bg-white">
+                    <div class="card-body p-4 p-md-5">
+
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold">Add New Item</h2>
+                            <p class="text-muted">Enter the details for your new inventory product.</p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong>Error:</strong> @errorMessage
+                                <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                            </div>
+                        }
+
+                        <EditForm Model="newItem" OnValidSubmit="HandleValidSubmit" FormName="addItemForm">
+                            <DataAnnotationsValidator />
+
+                            @* Standard Floating Label for the Name *@
+                            <div class="form-floating mb-4">
+                                <InputText @bind-Value="newItem.Name" id="itemName" class="form-control" placeholder=" " />
+                                <label for="itemName">Item Name</label>
+                                <ValidationMessage For="() => newItem.Name" class="text-danger small" />
+                            </div>
+
+                            <div class="form-floating mb-4">
+                                <InputText @bind-Value="newItem.CompanyName" id="itemCompanyName" class="form-control" placeholder=" " />
+                                <label for="itemCompanyName">Item Brand Name</label>
+                                <ValidationMessage For="() => newItem.CompanyName" class="text-danger small" />
+                            </div>
+
+                            @* Grouped Pricing Fields *@
+                            <div class="bg-light p-3 rounded-3 border mb-4">
+                                <h6 class="text-muted text-uppercase small fw-bold mb-3">Pricing Details</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <InputNumber @bind-Value="newItem.OriginalPrice" id="origPrice" class="form-control" placeholder=" " />
+                                            <label for="origPrice">Original Price</label>
+                                            <ValidationMessage For="() => newItem.OriginalPrice" class="text-danger small" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <InputNumber @bind-Value="newItem.DiscountPercentage" id="discount" class="form-control" placeholder=" " />
+                                            <label for="discount">Discount (%)</label>
+                                            <ValidationMessage For="() => newItem.DiscountPercentage" class="text-danger small" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* Grouped Stock Fields *@
+                            <div class="bg-light p-3 rounded-3 border mb-4">
+                                <h6 class="text-muted text-uppercase small fw-bold mb-3">Stock Management</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <InputNumber @bind-Value="newItem.StockCount" id="stock" class="form-control" placeholder=" " />
+                                            <label for="stock">Initial Stock Count</label>
+                                            <ValidationMessage For="() => newItem.StockCount" class="text-danger small" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <InputNumber @bind-Value="newItem.LowStockThreshold" id="threshold" class="form-control" placeholder=" " />
+                                            <label for="threshold">Warning Threshold</label>
+                                            <ValidationMessage For="() => newItem.LowStockThreshold" class="text-danger small" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-100 btn btn-lg btn-primary fw-bold shadow-sm">Save to Inventory</button>
+                        </EditForm>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateItemDto newItem { get; set; } = new();
+
+    private string? errorMessage;
+    private string? currentRetailerId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userPrincipal = authState.User;
+
+            if (userPrincipal.Identity is not null && userPrincipal.Identity.IsAuthenticated)
+            {
+                var appUser = await UserManager.GetUserAsync(userPrincipal);
+                if (appUser != null)
+                {
+                    currentRetailerId = appUser.Id;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error loading user profile. Please try logging in again.";
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            errorMessage = null;
+
+            if (string.IsNullOrEmpty(currentRetailerId))
+            {
+                errorMessage = "You must be logged in as a Retailer to add items.";
+                return;
+            }
+
+            await ItemService.CreateItemAsync(newItem, currentRetailerId);
+
+            // Redirects to the correct retailer dashboard
+            NavManager.NavigateTo("/retailer/inventory");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Could not save the item: {ex.Message}";
+        }
+    }
+
+    private async Task GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

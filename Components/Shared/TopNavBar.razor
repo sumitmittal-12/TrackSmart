@@ -1,0 +1,69 @@
+﻿@rendermode InteractiveServer
+
+@using TrackSmart.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+
+@* 1. Replaced 'top-row' with a full-width Bootstrap Navbar using a dark theme for contrast *@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-4">
+    <div class="container-fluid px-0">
+
+        @* 2. Left Side: Brand Anchoring *@
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+            <div class="mb-1">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto shadow" style="width: 40px; height: 40px;">
+                    <span style="font-size: 1.5rem;">📦</span>
+                </div>
+            </div>
+            <i class="bi bi-box-seam text-primary me-2 fs-4"></i>
+            <span class="text-white">TrackSmart</span>
+        </a>
+
+        @* 3. Right Side: Pushed right using ms-auto *@
+        <div class="d-flex align-items-center ms-auto">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="d-flex gap-3 align-items-center">
+                        @* Switched text to light gray so it's readable on dark background *@
+                        @* <span class="text-light me-3 d-none d-md-inline">Hello, @context.User.Identity?.Name!</span> *@
+
+                        @* Switched from outline to solid primary for the main action *@
+                        <button class="btn btn-primary fw-bold shadow-sm" @onclick="OpenProfile">
+                            <i class="bi bi-person-circle me-1"></i> Profile
+                        </button>
+
+                        <form action="Account/Logout" method="post" class="m-0">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="ReturnUrl" value="" />
+                            @* Switched to outline-light for the secondary action on a dark bar *@
+                            <button type="submit" class="btn btn-outline-light fw-bold shadow-sm">
+                                Log Out
+                            </button>
+                        </form>
+                    </div>
+                </Authorized>
+                @* <NotAuthorized>
+                    <div class="d-flex gap-3">
+                        <a href="Account/Login" class="btn btn-outline-light fw-bold shadow-sm">Log In</a>
+                        <a href="Account/Register" class="btn btn-primary fw-bold shadow-sm">Sign Up</a>
+                    </div>
+                </NotAuthorized> *@
+            </AuthorizeView>
+        </div>
+
+    </div>
+</nav>
+
+@* The Modal Instance *@
+<UserProfileModal @ref="profileModal" />
+
+@code {
+    private UserProfileModal profileModal = default!;
+
+    private async Task OpenProfile()
+    {
+        if (profileModal != null)
+        {
+            await profileModal.ShowAsync();
+        }
+    }
+}

@@ -1,0 +1,212 @@
+﻿@page "/edit-item/{Id:int}"
+@rendermode InteractiveServer
+
+@using TrackSmart.DTOs
+@using TrackSmart.Services
+@using TrackSmart.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@inject ItemService ItemService
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+@attribute [Authorize(Roles = "Retailer")]
+<PageTitle>Edit Item - TrackSmart</PageTitle>
+
+@* The same contrast wrapper used on Add Item and Auth pages *@
+<div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+
+                @* Cleaner back button layout *@
+                <div class="mb-3">
+                    <button class="btn btn-link text-decoration-none text-muted p-0" @onclick="GoBack">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Inventory
+                    </button>
+                </div>
+
+                <div class="card shadow-lg border-0 rounded-4 bg-white">
+                    <div class="card-body p-4 p-md-5">
+
+                        <div class="text-center mb-4">
+                            @* Using a pencil icon for the edit action *@
+                            <h2 class="fw-bold">Edit Item</h2>
+                            <p class="text-muted">Update the details for this inventory product.</p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong>Error:</strong> @errorMessage
+                                <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                            </div>
+                        }
+
+                        @if (editModel == null && string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted">Loading item details...</p>
+                            </div>
+                        }
+                        else if (editModel != null)
+                        {
+                            <EditForm Model="editModel" OnValidSubmit="HandleValidSubmit" FormName="editItemForm">
+                                <DataAnnotationsValidator />
+
+                                <div class="form-floating mb-4">
+                                    <InputText @bind-Value="editModel.Name" id="itemName" class="form-control" placeholder=" " />
+                                    <label for="itemName">Item Name</label>
+                                    <ValidationMessage For="() => editModel.Name" class="text-danger small" />
+                                </div>
+                                <div class="form-floating mb-4">
+                                    <InputText @bind-Value="editModel.CompanyName" id="itemCompanyName" class="form-control" placeholder=" " />
+                                    <label for="itemCompanyName">Item Brand Name</label>
+                                    <ValidationMessage For="() => editModel.CompanyName" class="text-danger small" />
+                                </div>
+
+                                @* Grouped Pricing Fields *@
+                                <div class="bg-light p-3 rounded-3 border mb-4">
+                                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Pricing Details</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <InputNumber @bind-Value="editModel.OriginalPrice" id="origPrice" class="form-control" placeholder=" " />
+                                                <label for="origPrice">Original Price ($)</label>
+                                                <ValidationMessage For="() => editModel.OriginalPrice" class="text-danger small" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <InputNumber @bind-Value="editModel.DiscountPercentage" id="discount" class="form-control" placeholder=" " />
+                                                <label for="discount">Discount (%)</label>
+                                                <ValidationMessage For="() => editModel.DiscountPercentage" class="text-danger small" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @* Grouped Stock Fields *@
+                                <div class="bg-light p-3 rounded-3 border mb-4">
+                                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Stock Management</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <InputNumber @bind-Value="editModel.StockCount" id="stock" class="form-control" placeholder=" " />
+                                                <label for="stock">Stock Count</label>
+                                                <ValidationMessage For="() => editModel.StockCount" class="text-danger small" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <InputNumber @bind-Value="editModel.LowStockThreshold" id="threshold" class="form-control" placeholder=" " />
+                                                <label for="threshold">Warning Threshold</label>
+                                                <ValidationMessage For="() => editModel.LowStockThreshold" class="text-danger small" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @* Action Buttons Layout *@
+                                <div class="row g-2 mt-4">
+                                    <div class="col-sm-6">
+                                        @* FIXED: Redirects properly to the retailer inventory instead of /catalog *@
+                                        <a href="/retailer/inventory" class="btn btn-outline-secondary btn-lg w-100 fw-bold shadow-sm">Cancel</a>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow-sm">Save Changes</button>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private CreateItemDto? editModel { get; set; }
+
+    private string? errorMessage;
+    private string? currentRetailerId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userPrincipal = authState.User;
+
+            if (userPrincipal.Identity is not null && userPrincipal.Identity.IsAuthenticated)
+            {
+                var appUser = await UserManager.GetUserAsync(userPrincipal);
+                if (appUser != null)
+                {
+                    currentRetailerId = appUser.Id;
+                }
+            }
+
+            if (editModel == null && !string.IsNullOrEmpty(currentRetailerId))
+            {
+                var existingItem = await ItemService.GetItemByIdAsync(Id, currentRetailerId);
+
+                if (existingItem != null)
+                {
+                    editModel = new CreateItemDto
+                    {
+                        Name = existingItem.Name,
+                        CompanyName = existingItem.CompanyName,
+                        OriginalPrice = existingItem.OriginalPrice,
+                        DiscountPercentage = existingItem.DiscountPercentage,
+                        StockCount = existingItem.StockCount,
+                        LowStockThreshold = existingItem.LowStockThreshold
+                    };
+                }
+                else
+                {
+                    errorMessage = "Item not found or you do not have permission to edit it.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load item: {ex.Message}";
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            errorMessage = null;
+
+            if (editModel != null && !string.IsNullOrEmpty(currentRetailerId))
+            {
+                await ItemService.UpdateItemAsync(Id, editModel, currentRetailerId);
+
+                // FIXED: Redirects to the proper retailer inventory page
+                NavManager.NavigateTo("/retailer/inventory");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to save changes: {ex.Message}";
+        }
+    }
+
+    private async Task GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

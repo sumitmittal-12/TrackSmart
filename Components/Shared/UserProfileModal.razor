@@ -1,0 +1,147 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using TrackSmart.Models
+
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+@if (isVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1050;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-circle me-2"></i> User Profile
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted">Loading profile...</p>
+                        </div>
+                    }
+                    else if (user != null)
+                    {
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <small class="text-muted d-block">Username</small>
+                                <strong>@user.UserName</strong>
+                            </li>
+                            <li class="list-group-item">
+                                <small class="text-muted d-block">Email</small>
+                                <strong>@user.Email</strong>
+                            </li>
+                            <li class="list-group-item">
+                                <small class="text-muted d-block">Account Type</small>
+                                <span class="badge @(isRetailer ? "bg-primary" : "bg-success") fs-6">
+                                    @displayRole
+                                </span>
+                            </li>
+
+                            @* UPDATED: Role-Specific UI Isolation for Retailers *@
+                            @if (isRetailer)
+                            {
+                                <li class="list-group-item bg-light mt-3 border rounded p-3">
+                                    <small class="text-muted d-block text-uppercase fw-bold mb-2" style="font-size: 0.75rem;">Store Details</small>
+
+                                    @* Store Name *@
+                                    <div class="d-flex align-items-start mb-2">
+                                        <i class="bi bi-shop text-primary me-2 mt-1"></i>
+                                        <div>
+                                            <strong class="fs-5 d-block text-dark">
+                                                @(string.IsNullOrEmpty(user.StoreName) ? "Unnamed Store" : user.StoreName)
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    @* Store Location (Address) *@
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-geo-alt-fill text-danger me-2 mt-1"></i>
+                                        <div>
+                                            @if (!string.IsNullOrWhiteSpace(user.AddressLine))
+                                            {
+                                                <div class="text-dark">@user.AddressLine</div>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(user.City) || !string.IsNullOrWhiteSpace(user.State) || !string.IsNullOrWhiteSpace(user.PostalCode))
+                                            {
+                                                <div class="text-muted small">
+                                                    @user.City@(!string.IsNullOrWhiteSpace(user.City) && !string.IsNullOrWhiteSpace(user.State) ? ", " : " ")@user.State @user.PostalCode
+                                                </div>
+                                            }
+
+                                            @if (string.IsNullOrWhiteSpace(user.AddressLine) && string.IsNullOrWhiteSpace(user.City))
+                                            {
+                                                <div class="text-muted small fst-italic">Location not provided.</div>
+                                            }
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger">Failed to load user profile.</div>
+                    }
+                </div>
+
+                <div class="modal-footer bg-light d-flex justify-content-between w-100">
+                    <form action="Account/Logout" method="post" class="m-0">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="" />
+                        <button type="submit" class="btn btn-danger fw-bold shadow-sm">
+                            <i class="bi bi-box-arrow-right me-1"></i> Log Out
+                        </button>
+                    </form>
+
+                    <button type="button" class="btn btn-secondary" @onclick="Close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isVisible = false;
+    private bool isLoading = true;
+
+    private ApplicationUser? user;
+    private bool isRetailer = false;
+    private string displayRole = string.Empty;
+
+    public async Task ShowAsync()
+    {
+        isVisible = true;
+        isLoading = true;
+        StateHasChanged();
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
+
+        if (principal.Identity is not null && principal.Identity.IsAuthenticated)
+        {
+            user = await UserManager.GetUserAsync(principal);
+
+            if (user != null)
+            {
+                isRetailer = await UserManager.IsInRoleAsync(user, "Retailer");
+                displayRole = isRetailer ? "Retailer (Store Manager)" : "Customer";
+            }
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void Close()
+    {
+        isVisible = false;
+        StateHasChanged();
+    }
+}

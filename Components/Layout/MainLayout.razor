@@ -1,0 +1,19 @@
+﻿@using TrackSmart.Components.Shared
+@inherits LayoutComponentBase
+
+<div class="page">
+    <main>
+        <TopNavBar />
+
+        @* ADDED: Inline style with !important to crush the default Blazor CSS *@
+        <article class="content" style="padding: 0 !important;">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

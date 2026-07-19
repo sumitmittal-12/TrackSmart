@@ -1,0 +1,284 @@
+﻿@page "/Account/Register"
+
+@using System.ComponentModel.DataAnnotations
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using TrackSmart.Data
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IEmailSender<ApplicationUser> EmailSender
+@inject ILogger<Register> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Register - TrackSmart</PageTitle>
+
+@* 1. CONTRAST WRAPPER: Subtle gray background to make the white card pop *@
+<div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
+
+    @* 2. REDUCED SPACING: Removed mt-5 to pull the card closer to the Navbar *@
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-6">
+
+                @* 3. INCREASED SHADOW: Changed from shadow-sm to shadow-lg for depth *@
+                <div class="card shadow-lg border-0 rounded-4 bg-white">
+                    <div class="card-body p-4 p-md-5">
+
+                        <div class="text-center mb-4">
+                            @* 4. NEW ICON: Replaced the blue circle with a large cardboard box *@
+
+                            <div class="mb-4">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto shadow" style="width: 80px; height: 80px;">
+                                    <span style="font-size: 2.5rem;">📦</span>
+                                </div>
+                            </div>
+                            <h2 class="fw-bold">Create an Account</h2>
+                            <p class="text-muted">Join TrackSmart to manage or browse local stores.</p>
+                        </div>
+
+                        <StatusMessage Message="@Message" />
+
+                        <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="register">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="alert alert-danger" role="alert" />
+
+                            <div class="form-floating mb-3">
+                                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                                <label for="Input.Email">Email Address</label>
+                                <ValidationMessage For="() => Input.Email" class="text-danger small" />
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <InputText @bind-Value="Input.UserName" class="form-control" placeholder="sumit123" />
+                                <label>Username</label>
+                                <ValidationMessage For="() => Input.UserName" class="text-danger small" />
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <select name="Input.Role" class="form-select fw-bold text-primary" id="role"
+                                        onchange="document.getElementById('retailerFieldsContainer').style.display = this.value === 'Retailer' ? 'block' : 'none';">
+                                    <option value="Customer" selected>Customer</option>
+                                    <option value="Retailer">Retailer (Store Manager)</option>
+                                </select>
+                                <label for="role">Account Type</label>
+                            </div>
+
+                            <div id="retailerFieldsContainer" style="display: none;">
+                                <div class="bg-light p-3 rounded-3 border mb-3">
+                                    <h6 class="text-muted text-uppercase small fw-bold mb-3">Store Details</h6>
+
+                                    <div class="form-floating mb-3">
+                                        <InputText @bind-Value="Input.StoreName" class="form-control" placeholder="Mittal Electronics" />
+                                        <label>Store Name</label>
+                                        <ValidationMessage For="() => Input.StoreName" class="text-danger small" />
+                                    </div>
+
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <div class="form-floating">
+                                                <InputText @bind-Value="Input.AddressLine" class="form-control" placeholder="123 Street" />
+                                                <label>Street Address</label>
+                                                <ValidationMessage For="() => Input.AddressLine" class="text-danger small" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-floating">
+                                                <InputText @bind-Value="Input.City" class="form-control" placeholder="City" />
+                                                <label>City</label>
+                                                <ValidationMessage For="() => Input.City" class="text-danger small" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-floating">
+                                                <InputText @bind-Value="Input.State" class="form-control" placeholder="State" />
+                                                <label>State</label>
+                                                <ValidationMessage For="() => Input.State" class="text-danger small" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-floating">
+                                                <InputText @bind-Value="Input.PostalCode" class="form-control" placeholder="Zip" />
+                                                <label>Zip</label>
+                                                <ValidationMessage For="() => Input.PostalCode" class="text-danger small" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                                        <label for="Input.Password">Password</label>
+                                        <ValidationMessage For="() => Input.Password" class="text-danger small" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                                        <label for="Input.ConfirmPassword">Confirm Password</label>
+                                        <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger small" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-100 btn btn-lg btn-primary fw-bold shadow-sm">Sign Up</button>
+
+                            <div class="text-center mt-4">
+                                <p class="text-muted mb-0">
+                                    Already have an account?
+                                    <a href="Account/Login" class="text-decoration-none fw-bold">Log in here</a>
+                                </p>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<IdentityError>? identityErrors;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+    }
+
+    public async Task RegisterUser(EditContext editContext)
+    {
+        var user = CreateUser();
+
+        user.UserName = Input.UserName;
+
+        if (Input.Role == "Retailer")
+        {
+            user.StoreName = Input.StoreName;
+            user.AddressLine = Input.AddressLine;
+            user.City = Input.City;
+            user.State = Input.State;
+            user.PostalCode = Input.PostalCode;
+        }
+        else
+        {
+            user.StoreName = null;
+            user.AddressLine = null;
+            user.City = null;
+            user.State = null;
+            user.PostalCode = null;
+        }
+
+        await UserStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
+        var emailStore = GetEmailStore();
+        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+        var result = await UserManager.CreateAsync(user, Input.Password);
+
+        if (!result.Succeeded)
+        {
+            identityErrors = result.Errors;
+            return;
+        }
+
+        await UserManager.AddToRoleAsync(user, Input.Role);
+
+        Logger.LogInformation("User created a new account with custom fields and bypassed email verification.");
+
+        await SignInManager.SignInAsync(user, isPersistent: false);
+
+        if (string.IsNullOrEmpty(ReturnUrl))
+        {
+            if (Input.Role == "Retailer")
+            {
+                RedirectManager.RedirectTo("/retailer/inventory");
+            }
+            else
+            {
+                RedirectManager.RedirectTo("/stores");
+            }
+        }
+        else
+        {
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+    }
+
+    private ApplicationUser CreateUser()
+    {
+        try
+        {
+            return Activator.CreateInstance<ApplicationUser>();
+        }
+        catch
+        {
+            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
+                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor.");
+        }
+    }
+
+    private IUserEmailStore<ApplicationUser> GetEmailStore()
+    {
+        if (!UserManager.SupportsUserEmail)
+        {
+            throw new NotSupportedException("The default UI requires a user store with email support.");
+        }
+        return (IUserEmailStore<ApplicationUser>)UserStore;
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Account Type")]
+        public string Role { get; set; } = "Customer";
+
+        [Required]
+        [Display(Name = "Username")]
+        public string UserName { get; set; } = "";
+
+        [Display(Name = "Store Name")]
+        public string? StoreName { get; set; }
+
+        [Display(Name = "Street Address")]
+        public string? AddressLine { get; set; }
+
+        [Display(Name = "City")]
+        public string? City { get; set; }
+
+        [Display(Name = "State")]
+        public string? State { get; set; }
+
+        [Display(Name = "Zip/Pin Code")]
+        public string? PostalCode { get; set; }
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm password")]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

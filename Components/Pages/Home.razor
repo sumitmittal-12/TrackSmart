@@ -1,0 +1,96 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using TrackSmart.Models
+
+@inject UserManager<ApplicationUser> UserManager
+
+<PageTitle>Retail Inventory Hub - TrackSmart</PageTitle>
+
+@* FULL PAGE WRAPPER: Centered content with light gray background, NO card *@
+<div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="d-flex flex-column align-items-center justify-content-center text-center py-5 px-3">
+
+    <div class="mb-4">
+        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto shadow" style="width: 80px; height: 80px;">
+            <span style="font-size: 2.5rem;">📦</span>
+        </div>
+    </div>
+    <h1 class="display-4 fw-bolder text-dark mb-3" style="letter-spacing: -1px;">TrackSmart Hub</h1>
+    <p class="lead text-muted mb-5" style="max-width: 600px;">
+        Manage your stock, discover local storefronts, and protect your margins with enterprise-grade security.
+    </p>
+
+    <AuthorizeView>
+        <Authorized>
+            @if (currentUser != null)
+            {
+                <div class="mb-4">
+                    <h3 class="fw-bold text-dark mb-3">Welcome back, @currentUser.UserName!</h3>
+
+                    <AuthorizeView Roles="Retailer" Context="retailerContext">
+                        <p class="text-muted mb-4 fs-5">
+                            Managing operations for:
+                            <span class="badge bg-dark px-3 py-2 ms-2 shadow-sm rounded-3">
+                                @(string.IsNullOrEmpty(currentUser.StoreName) ? "Unnamed Store" : currentUser.StoreName)
+                            </span>
+                        </p>
+                        <a href="/retailer/inventory" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold">
+                            Open Management Console <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="Customer" Context="customerContext">
+                        <p class="text-muted mb-4 fs-5">
+                            Account Type:
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 ms-2 shadow-sm rounded-3">
+                                Customer Marketplace
+                            </span>
+                        </p>
+                        <a href="/stores" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold">
+                            Browse Local Stores <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </AuthorizeView>
+                </div>
+            }
+            else
+            {
+                <div class="py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted small">Loading profile...</p>
+                </div>
+            }
+        </Authorized>
+
+        <NotAuthorized>
+            <div class="d-flex flex-column flex-sm-row gap-3">
+                <a href="/Account/Login" class="btn btn-outline-primary btn-lg px-5 shadow-sm fw-bold">
+                    Log In
+                </a>
+                <a href="/Account/Register" class="btn btn-primary btn-lg px-5 shadow-sm fw-bold">
+                    Sign Up
+                </a>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
+    private ApplicationUser? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState != null)
+        {
+            var authState = await AuthState;
+            var principal = authState.User;
+
+            if (principal.Identity?.IsAuthenticated == true)
+            {
+                currentUser = await UserManager.GetUserAsync(principal);
+            }
+        }
+    }
+}

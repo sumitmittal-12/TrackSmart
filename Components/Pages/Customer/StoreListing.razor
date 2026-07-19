@@ -1,0 +1,160 @@
+﻿@page "/stores"
+@rendermode InteractiveServer
+
+@using TrackSmart.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavManager
+
+@attribute [Authorize(Roles = "Customer")]
+<PageTitle>Available Stores</PageTitle>
+
+@* THE CONTRAST WRAPPER (Tightened padding to py-4 so it doesn't waste space) *@
+<div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
+    <div class="container mb-4">
+
+        @* Page Header *@
+        <div class="text-center mb-4">
+            <h2 class="display-6 fw-bold text-dark mb-1">Shop Local Stores</h2>
+            <p class="text-muted mb-0">Browse our registered retailers and view their catalogs.</p>
+        </div>
+
+        @* Error Banner *@
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3" role="alert">
+                <strong>Error:</strong> @errorMessage
+                <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+            </div>
+        }
+
+        @* THE MODERN SEARCH BAR (Centered, tightened margins) *@
+        <div class="row mb-4 justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-6 text-center">
+                <div class="search-wrapper mx-auto">
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden border bg-white">
+                        @* <span class="input-group-text bg-white border-0 ps-4 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span> *@
+                        <input type="text"
+                               class="form-control border-0 py-2 shadow-none fw-bold text-secondary"
+                               placeholder=" Search for a store name..."
+                               @bind-value="searchTerm"
+                               @bind-value:event="oninput" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (stores == null && string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Finding stores near you...</p>
+            </div>
+        }
+        else if (stores != null && !stores.Any())
+        {
+            <div class="card shadow-sm border-0 rounded-4 bg-white text-center py-4">
+                <div class="card-body">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto shadow-sm mb-3" style="width: 50px; height: 50px;">
+                        <span style="font-size: 1.5rem;">📦</span>
+                    </div>
+                    <h5 class="fw-bold text-dark">No Stores Found</h5>
+                    <p class="text-muted mb-0">There are no stores currently registered on the platform.</p>
+                </div>
+            </div>
+        }
+        else if (stores != null)
+        {
+            @* Tightened grid gap from g-4 to g-3 *@
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                @foreach (var store in FilteredStores)
+                {
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border-0 bg-white rounded-4 text-center">
+                            <div class="card-body p-3">
+
+                                <div class="mb-2">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width: 50px; height: 50px;">
+                                        <span style="font-size: 1.5rem;">📦</span>
+                                    </div>
+                                </div>
+
+                                <h5 class="card-title fw-bolder mb-1 text-dark" style="letter-spacing: -0.5px;">@store.StoreName</h5>
+
+                                <div class="text-muted small mb-2 px-2">
+                                    @if (!string.IsNullOrEmpty(store.AddressLine) || !string.IsNullOrEmpty(store.City) || !string.IsNullOrEmpty(store.State))
+                                    {
+                                        <div class="d-inline-flex align-items-center justify-content-center text-secondary">
+                                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                            @(string.Join(", ", new[] { store.AddressLine, store.City, store.State }.Where(s => !string.IsNullOrEmpty(s))))
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="fst-italic opacity-50"><i class="bi bi-geo-alt me-1"></i>Location unavailable</span>
+                                    }
+                                </div>
+
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0 pb-3 pt-0 px-3">
+                                <a href="/store-catalog/@store.Id" class="btn btn-primary w-100 fw-bold shadow-sm rounded-3">
+                                    View Catalog <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (!FilteredStores.Any() && !string.IsNullOrWhiteSpace(searchTerm))
+            {
+                <div class="text-center py-4 mt-3">
+                    <i class="bi bi-search text-muted mb-2 d-block" style="font-size: 2.5rem;"></i>
+                    <h5 class="fw-bold text-dark">No stores match "@searchTerm"</h5>
+                    <p class="text-muted mb-0">Try adjusting your search terms.</p>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private record StoreDisplayModel(string Id, string StoreName, string AddressLine, string City, string State);
+
+    private List<StoreDisplayModel>? stores;
+    private string searchTerm = string.Empty;
+    private string? errorMessage;
+
+    private IEnumerable<StoreDisplayModel> FilteredStores =>
+        string.IsNullOrWhiteSpace(searchTerm)
+            ? stores ?? Enumerable.Empty<StoreDisplayModel>()
+            : stores?.Where(s => s.StoreName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+              ?? Enumerable.Empty<StoreDisplayModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var retailerUsers = await UserManager.GetUsersInRoleAsync("Retailer");
+
+            stores = retailerUsers
+                .Select(u => new StoreDisplayModel(
+                    Id: u.Id,
+                    StoreName: string.IsNullOrWhiteSpace(u.StoreName) ? "Unnamed Store" : u.StoreName,
+                    AddressLine: string.IsNullOrWhiteSpace(u.AddressLine) ? "" : u.AddressLine,
+                    City: string.IsNullOrWhiteSpace(u.City) ? "" : u.City,
+                    State: string.IsNullOrWhiteSpace(u.State) ? "" : u.State))
+                .OrderBy(s => s.StoreName)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Could not load stores: {ex.Message}";
+            stores = new List<StoreDisplayModel>();
+        }
+    }
+}
