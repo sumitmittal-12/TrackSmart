@@ -8,6 +8,8 @@
 
         public string CompanyName { get; set; } = string.Empty ;
 
+        public string Description { get; set; } = string.Empty;
+
         public decimal OriginalPrice { get; set; }
 
         public decimal DiscountPercentage { get; set; }
@@ -21,5 +23,7 @@
         public decimal FinalPrice => OriginalPrice * (1 - (DiscountPercentage / 100m));
 
         public bool IsLowStock => StockCount <= LowStockThreshold;
+
+        public List<SupplierDto> Suppliers { get; set; } = new List<SupplierDto>();
     }
 }

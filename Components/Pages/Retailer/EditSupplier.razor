@@ -1,0 +1,240 @@
+﻿@page "/edit-supplier/{Id:int}"
+@rendermode InteractiveServer
+
+@using TrackSmart.DTOs
+@using TrackSmart.Models
+@using TrackSmart.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@inject SupplierService SupplierService
+@inject ItemService ItemService
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject IJSRuntime JS
+
+@attribute [Authorize(Roles = "Retailer")]
+<PageTitle>Edit Supplier - TrackSmart</PageTitle>
+
+<div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+
+                <div class="mb-3">
+                    <button class="btn btn-link text-decoration-none text-muted p-0" @onclick="GoBack">
+                        <i class="bi bi-arrow-left me-1"></i> Back
+                    </button>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-4 bg-white">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold">Update Supplier</h2>
+                            <p class="text-muted">Modify vendor details and mapped items.</p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger">@errorMessage</div>
+                        }
+
+                        @if (editSupplier == null && string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="text-muted mt-2">Loading supplier details...</p>
+                            </div>
+                        }
+                        else if (editSupplier != null)
+                        {
+                            <EditForm Model="editSupplier" OnValidSubmit="HandleValidSubmit" FormName="editSupplierForm">
+                                <DataAnnotationsValidator />
+
+                                <!-- Basic Info -->
+                                <h6 class="fw-bold text-muted mb-3">Contact Information</h6>
+                                <div class="form-floating mb-3">
+                                    <InputText @bind-Value="editSupplier.CompanyName" id="compName" class="form-control" placeholder=" " />
+                                    <label for="compName">Company Name</label>
+                                    <ValidationMessage For="() => editSupplier.CompanyName" class="text-danger small" />
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6 form-floating">
+                                        <InputText @bind-Value="editSupplier.ContactEmail" id="email" class="form-control" placeholder=" " />
+                                        <label for="email" class="ms-2">Contact Email</label>
+                                        <ValidationMessage For="() => editSupplier.ContactEmail" class="text-danger small" />
+                                    </div>
+                                    <div class="col-md-6 form-floating">
+                                        <InputText @bind-Value="editSupplier.ContactPhone" id="phone" class="form-control" placeholder=" " />
+                                        <label for="phone" class="ms-2">Phone Number</label>
+                                        <ValidationMessage For="() => editSupplier.ContactPhone" class="text-danger small" />
+                                    </div>
+                                </div>
+
+                                <!-- Address Info -->
+                                <h6 class="fw-bold text-muted mb-3">Address Information</h6>
+                                <div class="form-floating mb-3">
+                                    <InputText @bind-Value="editSupplier.AddressLine" id="address" class="form-control" placeholder=" " />
+                                    <label for="address">Address Line</label>
+                                    <ValidationMessage For="() => editSupplier.AddressLine" class="text-danger small" />
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-5 form-floating">
+                                        <InputText @bind-Value="editSupplier.City" id="city" class="form-control" placeholder=" " />
+                                        <label for="city" class="ms-2">City</label>
+                                    </div>
+                                    <div class="col-md-4 form-floating">
+                                        <InputText @bind-Value="editSupplier.State" id="state" class="form-control" placeholder=" " />
+                                        <label for="state" class="ms-2">State</label>
+                                    </div>
+                                    <div class="col-md-3 form-floating">
+                                        <InputText @bind-Value="editSupplier.PostalCode" id="zip" class="form-control" placeholder=" " />
+                                        <label for="zip" class="ms-2">Zip Code</label>
+                                    </div>
+                                </div>
+
+                                <!-- Searchable Item Selection -->
+                                <h6 class="fw-bold text-muted mb-3">Provided Items</h6>
+                                <div class="mb-4">
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                        <input type="text" class="form-control border-start-0 ps-0"
+                                               placeholder="Click to view and map items..."
+                                               @bind="searchTerm"
+                                               @bind:event="oninput"
+                                               @onfocus="() => isItemListVisible = true" />
+                                    </div>
+
+                                    @if (isItemListVisible)
+                                    {
+                                        <div class="border rounded-3 p-3 bg-light position-relative shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                                            <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="font-size: 0.75rem;" aria-label="Close" @onclick="() => isItemListVisible = false"></button>
+
+                                            <div class="mt-2">
+                                                @if (FilteredItems != null && FilteredItems.Any())
+                                                {
+                                                    @foreach (var item in FilteredItems)
+                                                    {
+                                                        <div class="form-check mb-2">
+                                                            <input class="form-check-input shadow-sm" type="checkbox" id="item_@item.Id"
+                                                                   checked="@editSupplier.ItemIds.Contains(item.Id)"
+                                                                   @onchange="@(e => ToggleItemSelection(item.Id, e.Value))" />
+                                                            <label class="form-check-label" for="item_@item.Id">
+                                                                <span class="fw-medium">@item.Name</span>
+                                                                <span class="text-muted small">(@item.CompanyName)</span>
+                                                            </label>
+                                                        </div>
+                                                    }
+                                                }
+                                                else if (availableItems == null)
+                                                {
+                                                    <div class="text-muted small text-center"><span class="spinner-border spinner-border-sm me-2"></span>Loading items...</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="text-muted small text-center">No matching items found.</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <button type="submit" class="w-100 btn btn-lg btn-success fw-bold shadow-sm mt-2">Save Changes</button>
+                            </EditForm>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; } // Grabs the supplier ID from the URL
+
+    [SupplyParameterFromForm]
+    private CreateSupplierDto? editSupplier { get; set; }
+
+    private List<ItemDto>? availableItems;
+    private string searchTerm = string.Empty;
+    private string? errorMessage;
+    private string? currentRetailerId;
+    private bool isItemListVisible = false;
+
+    private IEnumerable<ItemDto>? FilteredItems =>
+        string.IsNullOrWhiteSpace(searchTerm)
+            ? availableItems
+            : availableItems?.Where(i =>
+                i.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                i.CompanyName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                currentRetailerId = user.Id;
+
+                availableItems = await ItemService.GetItemsAsync(currentRetailerId);
+
+                // Fetch the existing data into the CreateSupplierDto
+                editSupplier = await SupplierService.GetSupplierForEditAsync(Id, currentRetailerId);
+
+                if (editSupplier == null)
+                {
+                    errorMessage = "Supplier not found.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+    }
+
+    private void ToggleItemSelection(int itemId, object? checkedValue)
+    {
+        if (editSupplier == null) return;
+
+        if (checkedValue is bool isChecked)
+        {
+            if (isChecked && !editSupplier.ItemIds.Contains(itemId))
+            {
+                editSupplier.ItemIds.Add(itemId);
+            }
+            else if (!isChecked && editSupplier.ItemIds.Contains(itemId))
+            {
+                editSupplier.ItemIds.Remove(itemId);
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(currentRetailerId) || editSupplier == null) return;
+
+            // Pass both the URL Id and the DTO to the backend
+            await SupplierService.UpdateSupplierAsync(Id, editSupplier, currentRetailerId);
+
+            // Redirect back to your preferred page
+            NavManager.NavigateTo("/directory");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving updates: {ex.Message}";
+        }
+    }
+
+    private async Task GoBack() => await JS.InvokeVoidAsync("history.back");
+}

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TrackSmart.Data;
 
@@ -11,9 +12,11 @@ using TrackSmart.Data;
 namespace TrackSmart.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260720150232_Migration5")]
+    partial class Migration5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -313,71 +316,6 @@ namespace TrackSmart.Migrations
                     b.ToTable("Items");
                 });
 
-            modelBuilder.Entity("TrackSmart.Models.ItemSupplier", b =>
-                {
-                    b.Property<int>("ItemId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SupplierId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ItemId", "SupplierId");
-
-                    b.HasIndex("SupplierId");
-
-                    b.ToTable("ItemSuppliers");
-                });
-
-            modelBuilder.Entity("TrackSmart.Models.Supplier", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AddressLine")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("CompanyName")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
-
-                    b.Property<string>("ContactEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ContactPhone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PostalCode")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("RetailerId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("State")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("isActive")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RetailerId");
-
-                    b.ToTable("Suppliers");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -489,47 +427,9 @@ namespace TrackSmart.Migrations
                     b.Navigation("Retailer");
                 });
 
-            modelBuilder.Entity("TrackSmart.Models.ItemSupplier", b =>
-                {
-                    b.HasOne("TrackSmart.Models.Item", "Item")
-                        .WithMany("ItemSuppliers")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TrackSmart.Models.Supplier", "Supplier")
-                        .WithMany("ItemSuppliers")
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Item");
-
-                    b.Navigation("Supplier");
-                });
-
-            modelBuilder.Entity("TrackSmart.Models.Supplier", b =>
-                {
-                    b.HasOne("TrackSmart.Models.ApplicationUser", "Retailer")
-                        .WithMany()
-                        .HasForeignKey("RetailerId");
-
-                    b.Navigation("Retailer");
-                });
-
             modelBuilder.Entity("TrackSmart.Models.ApplicationUser", b =>
                 {
                     b.Navigation("InventoryItems");
-                });
-
-            modelBuilder.Entity("TrackSmart.Models.Item", b =>
-                {
-                    b.Navigation("ItemSuppliers");
-                });
-
-            modelBuilder.Entity("TrackSmart.Models.Supplier", b =>
-                {
-                    b.Navigation("ItemSuppliers");
                 });
 #pragma warning restore 612, 618
         }

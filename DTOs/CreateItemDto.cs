@@ -7,7 +7,10 @@ namespace TrackSmart.DTOs
         [Required(ErrorMessage = "Please enter an item name.")]
         public string Name { get; set; } = string.Empty;
 
-        public string CompanyName { get; set; } = string.Empty; 
+        [Required(ErrorMessage = "Please enter a Brand Name.")]
+        public string CompanyName { get; set; } = string.Empty;
+
+        public string? Description { get; set; }
 
         [Required]
         [Range(0, 100000, ErrorMessage = "Price must be greater than zero.")]

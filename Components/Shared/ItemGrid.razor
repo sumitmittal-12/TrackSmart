@@ -18,7 +18,7 @@
         <div class="col">
             <div class="card h-100 shadow-sm border-0 rounded-4">
                 <div class="card-body p-4">
-
+                    
                     @* 1. THE COMPANY NAME (Protected with text-truncate) *@
                     <div class="text-muted small fw-bold text-uppercase mb-1 text-truncate" title="@item.CompanyName" style="letter-spacing: 0.5px;">
                         @(string.IsNullOrWhiteSpace(item.CompanyName) ? "Independent Brand" : item.CompanyName)
@@ -26,8 +26,8 @@
 
                     @* 2. THE ITEM NAME & BADGE *@
                     <h4 class="card-title d-flex justify-content-between align-items-start mb-3">
-                        <span class="fw-bolder text-dark text-truncate me-2" title="@item.Name">@item.Name</span>
-
+                        <span class="fw-bolder text-dark text-truncate me-2" title="@item.Name">@item.Name.ToUpper()</span>
+                        
                         <div>
                             @if (item.StockCount <= 0)
                             {
@@ -49,8 +49,14 @@
                             }
                         </div>
                     </h4>
+                     @* View Description Link (Added here) *@
+                    <div class="mt-3 text-start">
+                        <button class="btn btn-link p-0 text-decoration-none small text-success fw-medium" @onclick="() => OpenDescriptionModal(item)">
+                            <i class="bi bi-info-circle me-1"></i> View Description
+                        </button>
+                    </div>
 
-                    @* 3. PRICING BLOCK *@
+                    @* PRICING BLOCK *@
                     <div class="mt-3 bg-light p-3 rounded-3 border border-secondary-subtle">
                         <p class="mb-1 text-muted text-decoration-line-through">
                             <small>Original: @item.OriginalPrice.ToString("C")</small>
@@ -58,7 +64,8 @@
                         <p class="mb-1 text-success fw-bold">Discount: @item.DiscountPercentage% Off</p>
                         <p class="mb-0 fs-5 fw-bold text-primary">Final: @item.FinalPrice.ToString("C")</p>
                     </div>
-
+                    
+                    
                     <hr class="my-4" />
 
                     @* INJECTION POINT *@
@@ -74,6 +81,39 @@
     }
 </div>
 
+@* Description Modal *@
+@if (showDescriptionModal && selectedItemForDescription != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 1050;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0 rounded-4">
+                <div class="modal-header border-0 rounded-top-4 bg-light">
+                    <h5 class="modal-title fw-bold text-dark">
+                        <i class="bi bi-info-square me-2 text-success"></i> @selectedItemForDescription.Name
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseDescriptionModal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    @if (string.IsNullOrWhiteSpace(selectedItemForDescription.Description))
+                    {
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-card-text fs-1 d-block mb-2 opacity-50"></i>
+                            <p class="fst-italic mb-0">No description has been provided for this item.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-dark" style="white-space: pre-line;">@selectedItemForDescription.Description</p>
+                    }
+                </div>
+                <div class="modal-footer bg-light border-0 rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary fw-bold" @onclick="CloseDescriptionModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter, EditorRequired]
     public List<ItemDto> Items { get; set; } = new();
@@ -83,12 +123,29 @@
 
     private string searchTerm = string.Empty;
 
-    // 4. UPDATED SEARCH LOGIC: Now filters by Name OR CompanyName
+    // Modal State
+    private bool showDescriptionModal = false;
+    private ItemDto? selectedItemForDescription;
+
+    // 4. UPDATED SEARCH LOGIC: Now filters by Name OR CompanyName    
     private IEnumerable<ItemDto> FilteredItems =>
         string.IsNullOrWhiteSpace(searchTerm)
             ? Items
-            : Items.Where(i =>
+            : Items.Where(i => 
                 (i.Name != null && i.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
                 (i.CompanyName != null && i.CompanyName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
             );
+
+    // Modal Handlers
+    private void OpenDescriptionModal(ItemDto item)
+    {
+        selectedItemForDescription = item;
+        showDescriptionModal = true;
+    }
+
+    private void CloseDescriptionModal()
+    {
+        showDescriptionModal = false;
+        selectedItemForDescription = null;
+    }
 }

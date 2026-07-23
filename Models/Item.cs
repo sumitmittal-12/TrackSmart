@@ -8,11 +8,15 @@ namespace TrackSmart.Models
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(200)]
+        [MaxLength(25)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(200)]
+        [Required]
+        [MaxLength(25)]
         public string CompanyName { get; set; } = string.Empty;
+
+        [MaxLength(100)]
+        public string Description { get; set; } = string.Empty;
 
         [Range(0, 100000)]
         public decimal OriginalPrice { get; set; }
@@ -41,5 +45,8 @@ namespace TrackSmart.Models
         public string? RetailerId { get; set; }
 
         public ApplicationUser? Retailer { get; set; }
+
+        public ICollection<ItemSupplier> ItemSuppliers { get; set; } = new List<ItemSupplier>();
     }
 }
+

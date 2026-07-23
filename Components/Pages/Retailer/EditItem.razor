@@ -69,6 +69,11 @@
                                     <label for="itemCompanyName">Item Brand Name</label>
                                     <ValidationMessage For="() => editModel.CompanyName" class="text-danger small" />
                                 </div>
+                                <div class="form-floating mb-4">
+                                    <InputTextArea @bind-Value="editModel.Description" id="itemDesc" class="form-control" placeholder=" " style="height: 100px" />
+                                    <label for="itemDesc">Item Description (Optional)</label>
+                                    <ValidationMessage For="() => editModel.Description" class="text-danger small" />
+                                </div>
 
                                 @* Grouped Pricing Fields *@
                                 <div class="bg-light p-3 rounded-3 border mb-4">
@@ -167,6 +172,7 @@
                     {
                         Name = existingItem.Name,
                         CompanyName = existingItem.CompanyName,
+                        Description = existingItem.Description,
                         OriginalPrice = existingItem.OriginalPrice,
                         DiscountPercentage = existingItem.DiscountPercentage,
                         StockCount = existingItem.StockCount,

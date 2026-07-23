@@ -1,0 +1,135 @@
+﻿@page "/import-items"
+@rendermode InteractiveServer
+
+@using TrackSmart.Services
+@using TrackSmart.Models
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+
+@inject ItemService ItemService
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject IJSRuntime JS
+
+@attribute [Authorize(Roles = "Retailer")]
+<PageTitle>Import Items - TrackSmart</PageTitle>
+
+<div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+
+                <div class="mb-3">
+                    <button class="btn btn-link text-decoration-none text-muted p-0" @onclick="GoBack">
+                        <i class="bi bi-arrow-left me-1"></i> Back
+                    </button>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-4 bg-white">
+                    <div class="card-body p-4 p-md-5 text-center">
+                        <h2 class="fw-bold mb-3">Bulk Import Items</h2>
+                        <p class="text-muted mb-4">Upload an Excel (.xlsx) file to add multiple items at once.</p>
+
+                        @if (!string.IsNullOrEmpty(statusMessage))
+                        {
+                            <div class="alert @statusClass alert-dismissible fade show" role="alert">
+                                @statusMessage
+                                <button type="button" class="btn-close" @onclick="() => statusMessage = null"></button>
+                            </div>
+                        }
+
+                        <div class="border border-2 border-dashed rounded-4 p-5 mb-4 bg-light position-relative">
+                            <i class="bi bi-file-earmark-excel text-success mb-3" style="font-size: 3rem;"></i>
+                            <h6 class="fw-bold">Select Excel File</h6>
+                            <p class="text-muted small">Max file size: 5MB</p>
+
+                            <!-- Blazor's native file upload component -->
+                            <InputFile OnChange="HandleFileUpload" class="form-control" accept=".xlsx" />
+                        </div>
+
+                        <div class="text-start bg-light p-3 rounded-3 text-muted small">
+                            <span class="fw-bold text-dark"><i class="bi bi-info-circle me-1"></i> Expected Columns (Row 1 as Headers):</span>
+                            <ul class="mb-0 mt-1 ps-3">
+                                <li>A: Item Name (Required)</li>
+                                <li>B: Brand Name</li>
+                                <li>C: Description</li>
+                                <li>D: Original Price (Number)</li>
+                                <li>E: Discount % (Number)</li>
+                                <li>F: Stock Count (Number)</li>
+                                <li>G: Low Stock Threshold (Number)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? statusMessage;
+    private string statusClass = "alert-info";
+    private string? currentRetailerId;
+
+    // Set a max file size (e.g., 5 MB) to prevent server memory issues    
+    private const long MaxFileSize = 1024 * 1024 * 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+
+        if (user != null)
+        {
+            currentRetailerId = user.Id;
+        }
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(currentRetailerId)) return;
+
+            var file = e.File;
+
+            if (!file.Name.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowMessage("Please upload a valid .xlsx Excel file.", "alert-warning");
+                return;
+            }
+
+            statusMessage = "Importing data, please wait...";
+            statusClass = "alert-info";
+            StateHasChanged();
+
+            // Open a stream to read the uploaded file            
+            using var stream = file.OpenReadStream(MaxFileSize);
+
+            // Create a memory stream because ClosedXML requires a seekable stream            
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+
+            // Reset the position to the beginning before passing to ClosedXML            
+            memoryStream.Position = 0;
+
+            var itemsAdded = await ItemService.ImportItemsFromExcelAsync(memoryStream, currentRetailerId);
+
+            ShowMessage($"Success! {itemsAdded} items were imported into your inventory.", "alert-success");
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"An error occurred during import: {ex.Message}", "alert-danger");
+        }
+    }
+
+    private void ShowMessage(string message, string cssClass)
+    {
+        statusMessage = message;
+        statusClass = cssClass;
+    }
+
+    private async Task GoBack() => await JS.InvokeVoidAsync("history.back");
+}

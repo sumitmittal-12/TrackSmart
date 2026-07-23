@@ -5,6 +5,7 @@ using TrackSmart.Components;
 using TrackSmart.Components.Account;
 using TrackSmart.Data;
 using TrackSmart.Models;
+using TrackSmart.Repositories;
 using TrackSmart.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// Add this line
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
+
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
@@ -40,6 +45,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<ItemService>();
+builder.Services.AddScoped<SupplierService>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
