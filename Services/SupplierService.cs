@@ -13,8 +13,6 @@ namespace TrackSmart.Services
             _supplierRepository = supplierRepository;
         }
 
-        // --- READS ---
-
         public async Task<List<SupplierDto>> GetSuppliersWithItemsAsync(string retailerId)
         {
             return await _supplierRepository.GetSuppliersWithItemsAsync(retailerId);
@@ -25,7 +23,6 @@ namespace TrackSmart.Services
             return await _supplierRepository.GetSupplierDtoForEditAsync(supplierId, retailerId);
         }
 
-        // --- WRITES ---
 
         public async Task CreateSupplierAsync(CreateSupplierDto dto, string retailerId)
         {
@@ -39,7 +36,6 @@ namespace TrackSmart.Services
                 }
                 else
                 {
-                    // Soft-deleted logic
                     existingSupplier.isActive = true;
                     existingSupplier.ContactEmail = dto.ContactEmail;
                     existingSupplier.ContactPhone = dto.ContactPhone;

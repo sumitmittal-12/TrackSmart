@@ -17,8 +17,6 @@ namespace TrackSmart.Repositories
             _connectionFactory = connectionFactory;
         }
 
-        // DAPPER (For Fast, Read-Only DTOs)
-
         public async Task<List<SupplierDto>> GetSuppliersWithItemsAsync(string retailerId)
         {
             const string sql = @"
@@ -72,6 +70,8 @@ namespace TrackSmart.Repositories
                 WHERE SupplierId = @Id;";
 
             using var connection = _connectionFactory.CreateConnection();
+
+            // multi object acts as a cursor that allows you to read those result sets one by one in the exact order you wrote them in the SQL string.
             using var multi = await connection.QueryMultipleAsync(sql, new { Id = supplierId, RetailerId = retailerId });
 
             var supplierDto = await multi.ReadSingleOrDefaultAsync<CreateSupplierDto>();
@@ -82,8 +82,6 @@ namespace TrackSmart.Repositories
 
             return supplierDto;
         }
-
-        // EF CORE (For Tracking and Updating)
 
         public async Task<Supplier?> GetSupplierByNameAsync(string companyName, string retailerId)
         {
