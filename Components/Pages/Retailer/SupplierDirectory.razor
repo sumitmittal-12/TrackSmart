@@ -16,18 +16,15 @@
 @attribute [Authorize(Roles = "Retailer")]
 <PageTitle>Supplier Directory - TrackSmart</PageTitle>
 
-<!-- Light grey background wrapper -->
 <div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
     <div class="container">
         
-        <!-- Header, Search Bar, and Add Button -->
         <div class="row mb-4 align-items-center">
             <div class="col-md-5 mb-3 mb-md-0">
                 <h2 class="fw-bold mb-0 text-dark">Supplier Directory</h2>
                 <p class="text-muted mb-0">Browse your vendors and the items they provide.</p>
             </div>
             <div class="col-md-7 d-flex flex-column flex-md-row justify-content-md-end gap-3">
-                <!-- Search Bar -->
                 <div class="input-group shadow-sm" style="max-width: 350px;">
                     <input type="text" class="form-control border-start-0 ps-0" 
                            placeholder="  Search suppliers..." 
@@ -62,20 +59,17 @@
         else
         {
             <div class="list-group list-group-flush shadow-sm rounded-4 border bg-white overflow-hidden">
-                <!-- Loop through FilteredSuppliers instead of suppliers -->
                 @if (FilteredSuppliers != null && FilteredSuppliers.Any())
                 {
                     @foreach (var supplier in FilteredSuppliers)
                     {
                         <div class="list-group-item py-4 border-bottom border-light">
                             
-                            <!-- SUPPLIER HEADER & ACTIONS -->
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h5 class="fw-bolder text-uppercase text-dark mb-0" style="letter-spacing: 0.5px;">
                                     @supplier.CompanyName.ToUpper()
                                 </h5>
                                 
-                                <!-- Action Buttons (Edit & Delete) -->
                                 <div class="d-flex gap-2">
                                     <a href="/edit-supplier/@supplier.Id" class="btn btn-sm btn-outline-primary rounded-pill shadow-sm px-3">
                                         <i class="bi bi-pencil-square me-1"></i> Edit
@@ -86,7 +80,6 @@
                                 </div>
                             </div>
 
-                            <!-- SUPPLIER CONTACT DETAILS (Expandable - Changed to Green/text-success) -->
                             <details class="mb-4 ms-2">
                                 <summary class="small fw-bold text-success mb-2" style="cursor: pointer; user-select: none;">
                                     View Contact Details
@@ -116,7 +109,6 @@
                                 </div>
                             </details>
 
-                            <!-- INDENTED SECTION FOR SUPPLIED ITEMS -->
                             <div class="ms-4 ms-md-5 border-start border-3 border-primary ps-4 py-1">
                                 <h6 class="fw-bold text-secondary text-uppercase small mb-3">Supplied Items:</h6>
                                 
@@ -125,13 +117,11 @@
                                     @foreach (var item in supplier.SuppliedItems)
                                     {
                                         <div class="mb-3 last-child-mb-0">
-                                            <!-- Item Name -->
                                             <h6 class="fw-bold text-dark mb-1">
-                                                <i class="bi bi-box-seam text-primary me-2"></i>@item.Name 
-                                                <span class="text-muted fw-normal">(@item.CompanyName)</span>
+                                                <i class="bi bi-box-seam text-primary me-2"></i>@item.Name.ToUpper() 
+                                                <span class="text-muted fw-normal">(@item.CompanyName.ToUpper())</span>
                                             </h6>
                                             
-                                            <!-- ITEM DETAILS (Expandable) -->
                                             <details class="mt-2">
                                                 <summary class="small fw-bold text-primary mb-2" style="cursor: pointer; user-select: none;">
                                                     View Item Details
@@ -202,7 +192,6 @@
                         </div>
                         <div class="modal-body p-4">
                             <p class="mb-0 fs-5 text-center">Are you sure you want to remove this supplier?</p>
-                            <p class="text-muted text-center mt-2 small">This will hide them from your directory but keep their data archived.</p>
                         </div>
                         <div class="modal-footer bg-light border-0 rounded-bottom-4 d-flex">
                             <button type="button" class="btn btn-secondary flex-fill fw-bold" @onclick="CloseDeleteModal">Cancel</button>

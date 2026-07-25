@@ -44,7 +44,6 @@
                         <EditForm Model="newSupplier" OnValidSubmit="HandleValidSubmit" FormName="addSupplierForm">
                             <DataAnnotationsValidator />
 
-                            <!-- Basic Info -->
                             <h6 class="fw-bold text-muted mb-3">Contact Information</h6>
                             <div class="form-floating mb-3">
                                 <InputText @bind-Value="newSupplier.CompanyName" id="compName" class="form-control" placeholder=" " />
@@ -65,7 +64,6 @@
                                 </div>
                             </div>
 
-                            <!-- Address Info -->
                             <h6 class="fw-bold text-muted mb-3">Address Information</h6>
                             <div class="form-floating mb-3">
                                 <InputText @bind-Value="newSupplier.AddressLine" id="address" class="form-control" placeholder=" " />
@@ -88,7 +86,7 @@
                                 </div>
                             </div>
 
-                            <!-- Searchable Item Selection -->
+                            @* Searchable Item Selection  *@
                             <h6 class="fw-bold text-muted mb-3">Provided Items</h6>
 
                             <div class="row mb-4">
@@ -103,7 +101,6 @@
                                 @if (isItemListVisible)
                                 {
                                     <div class="border rounded-3 p-3 bg-light position-relative shadow-sm" style="max-height: 200px; overflow-y: auto;">
-                                        <!-- Close Button -->
                                         <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="font-size: 0.75rem;" aria-label="Close" @onclick="() => isItemListVisible = false"></button>
 
                                         <div class="mt-2">
@@ -207,9 +204,7 @@
 
             // Save the supplier
             await SupplierService.CreateSupplierAsync(newSupplier, currentRetailerId);
-
-            // Redirect cleanly
-            NavManager.NavigateTo("/");
+            NavManager.NavigateTo("/directory");
         }
         catch (Exception ex)
         {

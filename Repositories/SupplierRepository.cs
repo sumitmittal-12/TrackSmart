@@ -17,9 +17,7 @@ namespace TrackSmart.Repositories
             _connectionFactory = connectionFactory;
         }
 
-        // ==========================================
         // DAPPER (For Fast, Read-Only DTOs)
-        // ==========================================
 
         public async Task<List<SupplierDto>> GetSuppliersWithItemsAsync(string retailerId)
         {
@@ -85,9 +83,7 @@ namespace TrackSmart.Repositories
             return supplierDto;
         }
 
-        // ==========================================
         // EF CORE (For Tracking and Updating)
-        // ==========================================
 
         public async Task<Supplier?> GetSupplierByNameAsync(string companyName, string retailerId)
         {

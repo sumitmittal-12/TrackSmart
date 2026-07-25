@@ -14,7 +14,7 @@ namespace TrackSmart.Services
             _itemRepository = itemRepository;
         }
 
-        //  READ OPERATIONS
+        // READ OPERATIONS
 
         public async Task<List<ItemDto>> GetItemsAsync(string retailerId)
             => await _itemRepository.GetItemsAsync(retailerId);
@@ -26,7 +26,7 @@ namespace TrackSmart.Services
             => await _itemRepository.GetItemDtoByIdAsync(id, retailerId);
 
 
-        // --- WRITE OPERATIONS ---
+        // WRITE OPERATIONS
 
         public async Task DeleteItemAsync(int id, string retailerId)
         {
@@ -50,7 +50,7 @@ namespace TrackSmart.Services
                 }
                 else
                 {
-                    // Resurrect soft-deleted item
+                    // Resurrecting soft-deleted item
                     existingItem.isActive = true;
                     existingItem.Description = dto.Description ?? string.Empty;
                     existingItem.OriginalPrice = dto.OriginalPrice ?? 0m;
@@ -63,7 +63,7 @@ namespace TrackSmart.Services
                 }
             }
 
-            // Create new item
+            // Creating new item
             var newItem = new Item
             {
                 Name = dto.Name,

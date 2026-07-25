@@ -11,17 +11,14 @@
 @attribute [Authorize(Roles = "Customer")]
 <PageTitle>Available Stores</PageTitle>
 
-@* THE CONTRAST WRAPPER (Tightened padding to py-4 so it doesn't waste space) *@
 <div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
     <div class="container mb-4">
 
-        @* Page Header *@
         <div class="text-center mb-4">
             <h2 class="display-6 fw-bold text-dark mb-1">Shop Local Stores</h2>
             <p class="text-muted mb-0">Browse our registered retailers and view their catalogs.</p>
         </div>
 
-        @* Error Banner *@
         @if (!string.IsNullOrEmpty(errorMessage))
         {
             <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3" role="alert">
@@ -30,14 +27,10 @@
             </div>
         }
 
-        @* THE MODERN SEARCH BAR (Centered, tightened margins) *@
         <div class="row mb-4 justify-content-center">
             <div class="col-md-10 col-lg-8 col-xl-6 text-center">
                 <div class="search-wrapper mx-auto">
                     <div class="input-group shadow-sm rounded-pill overflow-hidden border bg-white">
-                        @* <span class="input-group-text bg-white border-0 ps-4 text-muted">
-                            <i class="bi bi-search"></i>
-                        </span> *@
                         <input type="text"
                                class="form-control border-0 py-2 shadow-none fw-bold text-secondary"
                                placeholder=" Search for a store name..."
@@ -55,7 +48,7 @@
                 <p class="mt-2 text-muted">Finding stores near you...</p>
             </div>
         }
-        else if (stores != null && !stores.Any())
+        else if (!stores.Any())
         {
             <div class="card shadow-sm border-0 rounded-4 bg-white text-center py-4">
                 <div class="card-body">
@@ -67,9 +60,8 @@
                 </div>
             </div>
         }
-        else if (stores != null)
+        else
         {
-            @* Tightened grid gap from g-4 to g-3 *@
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
                 @foreach (var store in FilteredStores)
                 {
@@ -102,7 +94,7 @@
                             </div>
                             <div class="card-footer bg-transparent border-top-0 pb-3 pt-0 px-3">
                                 <a href="/store-catalog/@store.Id" class="btn btn-primary w-100 fw-bold shadow-sm rounded-3">
-                                    View Catalog <i class="bi bi-arrow-right ms-1"></i>
+                                    View Inventory <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             </div>
                         </div>

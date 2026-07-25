@@ -21,11 +21,7 @@
                 <div class="card shadow-lg border-0 rounded-4 bg-white">
                     <div class="card-body p-4 p-md-5">
 
-                        <div class="text-center mb-4">
-                            @* 1. FIXED ICON: Wrapped in a primary circle so it matches the Register page perfectly *@
-                            @* <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 60px; height: 60px;">
-                                <i class="bi bi-box-arrow-in-right fs-2"></i>
-                            </div> *@
+                        <div class="text-center mb-4">          
                             
                             <div class="mb-4">
                                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto shadow" style="width: 80px; height: 80px;">
@@ -43,7 +39,6 @@
                             <ValidationSummary class="alert alert-danger" role="alert" />
 
                             <div class="form-floating mb-3">
-                                @* 2. FIXED PLACEHOLDER: Changed to a single space so floating labels don't break *@
                                 <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control" autocomplete="username" aria-required="true" placeholder=" " />
                                 <label for="Input.UserName" class="form-label">Username</label>
                                 <ValidationMessage For="() => Input.UserName" class="text-danger small" />

@@ -17,7 +17,7 @@ namespace TrackSmart.Repositories
             _connectionFactory = connectionFactory;
         }
 
-        // --- DAPPER READS ---
+        // DAPPER READS
         public async Task<List<ItemDto>> GetItemsAsync(string retailerId)
         {
             const string sql = @"
@@ -85,21 +85,21 @@ namespace TrackSmart.Repositories
 
         public async Task<Item?> GetItemEntityByIdAsync(int id, string retailerId)
         {
-            // Using EF Core so it tracks your updates and deletes automatically!
+            // Using EF Core so it tracks updates and deletes automatically!
             return await _context.Items
                 .FirstOrDefaultAsync(i => i.Id == id && i.RetailerId == retailerId);
         }
 
         public async Task<Item?> GetItemByNameAndCompanyAsync(string name, string companyName, string retailerId)
         {
-            // Using EF Core so it tracks your updates automatically!
             return await _context.Items
                 .FirstOrDefaultAsync(i =>
                     i.RetailerId == retailerId &&
                     i.Name.ToLower() == name.ToLower() &&
                     i.CompanyName.ToLower() == companyName.ToLower());
         }
-        // --- EF CORE WRITES ---
+
+        //EF CORE WRITES
         public async Task AddItemAsync(Item item)
         {
             await _context.Items.AddAsync(item);

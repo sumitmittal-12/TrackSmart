@@ -53,7 +53,6 @@
                             <EditForm Model="editSupplier" OnValidSubmit="HandleValidSubmit" FormName="editSupplierForm">
                                 <DataAnnotationsValidator />
 
-                                <!-- Basic Info -->
                                 <h6 class="fw-bold text-muted mb-3">Contact Information</h6>
                                 <div class="form-floating mb-3">
                                     <InputText @bind-Value="editSupplier.CompanyName" id="compName" class="form-control" placeholder=" " />
@@ -74,7 +73,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Address Info -->
                                 <h6 class="fw-bold text-muted mb-3">Address Information</h6>
                                 <div class="form-floating mb-3">
                                     <InputText @bind-Value="editSupplier.AddressLine" id="address" class="form-control" placeholder=" " />
@@ -97,7 +95,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Searchable Item Selection -->
                                 <h6 class="fw-bold text-muted mb-3">Provided Items</h6>
                                 <div class="mb-4">
                                     <div class="input-group mb-2">
@@ -226,8 +223,6 @@
 
             // Pass both the URL Id and the DTO to the backend
             await SupplierService.UpdateSupplierAsync(Id, editSupplier, currentRetailerId);
-
-            // Redirect back to your preferred page
             NavManager.NavigateTo("/directory");
         }
         catch (Exception ex)

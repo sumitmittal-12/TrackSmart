@@ -17,13 +17,11 @@
 @attribute [Authorize(Roles = "Retailer")]
 <PageTitle>Add New Inventory - TrackSmart</PageTitle>
 
-@* The same contrast wrapper used on auth pages *@
 <div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-10 col-lg-8 col-xl-7">
 
-                @* A cleaner, text-based back button placed just outside the card *@
                 <div class="mb-3">
                     <button class="btn btn-link text-decoration-none text-muted p-0" @onclick="GoBack">
                         <i class="bi bi-arrow-left me-1"></i> Back to Inventory
@@ -49,7 +47,6 @@
                         <EditForm Model="newItem" OnValidSubmit="HandleValidSubmit" FormName="addItemForm">
                             <DataAnnotationsValidator />
 
-                            @* Standard Floating Label for the Name *@
                             <div class="form-floating mb-4">
                                 <InputText @bind-Value="newItem.Name" id="itemName" class="form-control" placeholder=" " />
                                 <label for="itemName">Item Name</label>

@@ -16,18 +16,15 @@
 @attribute [Authorize(Roles = "Retailer")]
 <PageTitle>Item Directory - TrackSmart</PageTitle>
 
-<!-- Added the light grey background wrapper to match your theme -->
 <div style="background-color: #f4f6f8; min-height: calc(100vh - 60px);" class="py-4">
     <div class="container">
         
-        <!-- Header, Search Bar, and Add Button -->
         <div class="row mb-4 align-items-center">
             <div class="col-md-5 mb-3 mb-md-0">
                 <h2 class="fw-bold mb-0 text-dark">Item Directory</h2>
                 <p class="text-muted mb-0">Browse your inventory and their suppliers.</p>
             </div>
             <div class="col-md-7 d-flex flex-column flex-md-row justify-content-md-end gap-3">
-                <!-- Search Bar -->
                 <div class="input-group shadow-sm" style="max-width: 350px;">
                     <input type="text" class="form-control border-start-0 ps-0" 
                            placeholder="  Search items or brands..." 
@@ -54,19 +51,16 @@
         else
         {
             <div class="list-group list-group-flush shadow-sm rounded-4 border bg-white overflow-hidden">
-                <!-- Loop through FilteredItems instead of items -->
                 @if (FilteredItems != null && FilteredItems.Any())
                 {
                     @foreach (var item in FilteredItems)
                     {
                         <div class="list-group-item py-4 border-bottom border-light">
                             
-                            <!-- ITEM NAME (COMPANY NAME) IN UPPERCASE -->
                             <h5 class="fw-bolder text-uppercase mb-2 text-dark" style="letter-spacing: 0.5px;">
                                 @item.Name.ToUpper() (@item.CompanyName.ToUpper())
                             </h5>
 
-                            <!-- ITEM DETAILS (Expandable) -->
                             <details class="mb-4 ms-2">
                                 <summary class="small fw-bold text-success mb-2" style="cursor: pointer; user-select: none;">
                                     View Item Details
@@ -103,7 +97,6 @@
                                 </div>
                             </details>
 
-                            <!-- Indented section for the Suppliers -->
                             <div class="ms-4 ms-md-5 border-start border-3 border-primary ps-4 py-1">
                                 <h6 class="fw-bold text-secondary text-uppercase small mb-3">Sourced From:</h6>
                                 
@@ -112,12 +105,10 @@
                                     @foreach (var supplier in item.Suppliers)
                                     {
                                         <div class="mb-3 last-child-mb-0">
-                                            <!-- Supplier Name as a Heading -->
                                             <h6 class="fw-bold text-dark mb-1">
                                                 <i class="bi bi-truck text-primary me-2"></i>@supplier.CompanyName.ToUpper()
                                             </h6>
                                             
-                                            <!-- Native Details tag for expandable contact info -->
                                             <details class="mt-2">
                                                 <summary class="small fw-bold text-primary mb-2" style="cursor: pointer; user-select: none;">
                                                     View Supplier Details
@@ -152,7 +143,7 @@
                                 else
                                 {
                                     <span class="text-muted small fst-italic d-flex align-items-center">
-                                        <i class="bi bi-info-circle me-2"></i> Independent / No Supplier Assigned
+                                        <i class="bi bi-info-circle me-2"></i> No Supplier Assigned
                                     </span>
                                 }
                             </div>
