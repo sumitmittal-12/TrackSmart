@@ -36,7 +36,6 @@ namespace TrackSmart.Repositories
             const string sql = @"
                 SELECT 
                     i.Id, i.Name, i.CompanyName, i.Description, i.OriginalPrice, i.DiscountPercentage, i.StockCount, i.LowStockThreshold,
-                    -- Dapper splits here
                     s.Id, s.CompanyName, s.ContactEmail, s.ContactPhone, s.AddressLine, s.City, s.State, s.PostalCode
                 FROM Items i
                 LEFT JOIN ItemSuppliers isup ON i.Id = isup.ItemId

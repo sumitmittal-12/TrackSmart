@@ -106,6 +106,7 @@ namespace TrackSmart.Services
         public async Task<int> ImportItemsFromExcelAsync(Stream fileStream, string retailerId)
         {
             var itemsToInsert = new List<Item>();
+            int updatedItemsCount = 0;
 
             using (var workbook = new XLWorkbook(fileStream))
             {
@@ -118,12 +119,40 @@ namespace TrackSmart.Services
                     if (string.IsNullOrWhiteSpace(name)) continue;
 
                     var companyName = row.Cell(2).GetString();
-                    var description = row.Cell(3).GetString();
 
+                    var existingItem = await _itemRepository.GetItemByNameAndCompanyAsync(name, companyName, retailerId);
+
+                    var description = row.Cell(3).GetString();
                     decimal.TryParse(row.Cell(4).GetString(), out decimal price);
                     decimal.TryParse(row.Cell(5).GetString(), out decimal discount);
                     int.TryParse(row.Cell(6).GetString(), out int stock);
                     int.TryParse(row.Cell(7).GetString(), out int threshold);
+
+                    if (existingItem != null)
+                    {
+                        if (existingItem.isActive)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            existingItem.isActive = true;
+                            existingItem.Description = description;
+                            existingItem.OriginalPrice = price;
+                            existingItem.DiscountPercentage = discount;
+                            existingItem.StockCount = stock;
+                            existingItem.LowStockThreshold = threshold;
+
+                            updatedItemsCount++;
+                            continue; 
+                        }
+                    }
+
+                    var alreadyInList = itemsToInsert.Any(i =>
+                        i.Name.Equals(name, StringComparison.OrdinalIgnoreCase) &&
+                        i.CompanyName.Equals(companyName, StringComparison.OrdinalIgnoreCase));
+
+                    if (alreadyInList) continue;
 
                     itemsToInsert.Add(new Item
                     {
@@ -143,10 +172,11 @@ namespace TrackSmart.Services
             if (itemsToInsert.Any())
             {
                 await _itemRepository.AddItemsBulkAsync(itemsToInsert);
-                await _itemRepository.SaveChangesAsync();
             }
 
-            return itemsToInsert.Count;
+            await _itemRepository.SaveChangesAsync();
+
+            return itemsToInsert.Count + updatedItemsCount;
         }
     }
 }
